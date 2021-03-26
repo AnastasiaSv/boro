@@ -2,10 +2,10 @@ import '../scss/index.scss';
 
 const postsContainer = document.querySelector('.posts-container'),
       listContainer = document.querySelector('.list-container'),
+      list = document.querySelector('.list'),
       modalContainer = document.querySelector('.modal-container'),
       sortContainer = document.querySelector('.sort'),
       sortLabels = sortContainer.querySelectorAll('label'),
-      listItemRoot = listContainer.querySelector('.list__item-root'),
       footer = document.querySelector('.footer'),
       resetButton = document.querySelector('.reset'),
       viewButtons = document.querySelectorAll('input[name="view"]'),
@@ -29,8 +29,9 @@ let rows = 16,
         sortBySize: null
     };
 
+localStorage.setItem('deletedPosts', '');
+
 displayCards();
-displayList();
 
 sortListener(titleSort, 'sortByTitle');
 sortListener(categorySort, 'sortByCategory');
@@ -57,6 +58,7 @@ viewButtons.forEach(item => {
             addClass(viewCardsLabel, 'active');
             removeClass(viewListLabel, 'active');
         } else {
+            if (list.innerHTML == '') displayList();
             setDisplay(listContainer, 'flex');
             setDisplay(sortContainer, 'none');
             setDisplay(postsContainer, 'none');
@@ -71,13 +73,23 @@ viewButtons.forEach(item => {
 async function displayCards(status = '') {
     let posts;
 
-    if ((status == 'full') || (localStorage.getItem('posts') === null)) {
+    if (localStorage.getItem('posts') === null) {
         posts = await getPosts();
         posts = addIdsToPosts(posts);
-        updateLocalStorage(posts);
+        updateLocalStorage('posts', posts);
+    } else if (status == 'total') {
+        let deletedPosts = [];
+
+        posts = JSON.parse(localStorage.getItem('posts'));
+        if (localStorage.getItem('deletedPosts')) deletedPosts = JSON.parse(localStorage.getItem('deletedPosts'));
+        posts = [...posts, ...deletedPosts];
+        sortAsc(posts, 'id');
+        updateLocalStorage('posts', posts);
     } else {
         posts = JSON.parse(localStorage.getItem('posts'));
     }
+
+    console.log(posts);
 
     if (sortState.sortByTitle == 'asc') sortAsc(posts, 'image');
     if (sortState.sortByTitle == 'desc') sortDesc(posts, 'image');
@@ -97,8 +109,8 @@ async function displayCards(status = '') {
 
 // Create a grid of cards
 function createGrid(posts, currentPosts, pages) {
-    postsContainer.innerHTML = '';
     loader.style.display = 'block';
+    postsContainer.innerHTML = '';
 
     for (let i = 0; i < currentPosts.length; i++) {
         let post = currentPosts[i];
@@ -125,25 +137,32 @@ function createGrid(posts, currentPosts, pages) {
 
         let closeEl = cardWrapperEl.querySelector('.close');
 
-        closeEl.addEventListener('click', () => {
-            posts.forEach((item, i) => {
-                if (item.id == cardWrapperEl.id) posts.splice(i, 1);
+
+        closeEl.addEventListener('click', function() {
+            posts.forEach((post, i) => {
+                if (post.id == cardWrapperEl.id) {
+                    this.closest('.card-wrapper').style.display = 'none';
+                    posts.splice(i, 1);
+                    saveDeletedPostsToLocalStorage(post);
+
+                    let data = pagination(posts, currentPage, rows);
+                    pages = data.pages;
+                    createPaginationButtons(pages);
+                }
             });
-            updateLocalStorage(posts);
-            displayCards();
+            updateLocalStorage('posts', posts);
         });
 
         postsContainer.appendChild(cardWrapperEl);
-
         createPaginationButtons(pages);
     }
 
     loader.style.display = 'none';
 }
 
-
 // Display data as list
 async function displayList() {
+    loader.style.display = 'block';
     let posts = await getPosts();
     let listArray = groupByProp(posts);
     let parentList = document.createElement('ul');
@@ -152,18 +171,29 @@ async function displayList() {
         let parentLi = createTextElement('li', key, 'show');
         let childList = document.createElement('ul');
 
-        listArray[key].forEach(item => {
+        listArray[key].forEach(post => {
             let li = document.createElement('li');
-            li.innerHTML = `<div class="list__image"><img src="${url}${item.image}" alt="" /></div>`;
+            li.innerHTML = `
+                <div class="list-item">
+                    <div class="list-item__image"><img src="${url}${post.image}" alt="" /></div>
+                    <div class="list-item__info">
+                        <div class="list-item__name"><strong>Name</strong> ${showName(post.image)}</div>
+                        <div class="list-item__category"><strong>Category</strong> ${post.category}</div>
+                        <div class="list-item__filesize"><strong>File size</strong> ${bytesToSize(post.filesize)}</div>
+                        <div class="list-item__date"><strong>Date</strong> ${timestampToDate(post.timestamp)}</div>
+                    </div>
+                </div>
+            `;
             childList.append(li);
 
             li.addEventListener('click', function () {
-                let image = createImage(`${url}${item.image}`, 'modal__image');
+                let image = createImage(`${url}${post.image}`, 'modal__image');
                 modalContainer.innerHTML = '';
                 modalContainer.append(image);
                 const thumbs = listContainer.querySelectorAll('li');
                 removeClassFromElements(thumbs, 'full-size');
                 this.classList.toggle('full-size');
+                goUp();
             });
         });
 
@@ -173,15 +203,31 @@ async function displayList() {
             event.stopPropagation();
             toggleThumbs(event);
         });
+
+        loader.style.display = 'none';
         
         parentList.append(parentLi);
     }
 
+    list.innerHTML = '<li class="list__item list__item-root show">categories</li>';
+    const listItemRoot = list.querySelector('.list__item-root');
+
     listItemRoot.append(parentList);
     listItemRoot.addEventListener('click', event => {
+        if (event.target.nodeName == 'UL') return;
         event.stopPropagation();
         toggleThumbs(event);
     });
+}
+
+// Go up function
+var timeOut;
+function goUp() {
+    var top = Math.max(document.body.scrollTop,document.documentElement.scrollTop);
+    if(top > 0) {
+        window.scrollBy(0,-100);
+        timeOut = setTimeout(goUp(),20);
+    } else clearTimeout(timeOut);
 }
 
 // Toggle thumbs by click
@@ -192,9 +238,6 @@ function toggleThumbs(event) {
     childrenList.hidden = !childrenList.hidden;
 
     if (childrenList.hidden) {
-        modalContainer.innerHTML = '';
-        const thumbs = listContainer.querySelectorAll('li');
-        removeClassFromElements(thumbs, 'full-size');
         event.target.classList.add('hide');
         event.target.classList.remove('show');
     } else {
@@ -288,8 +331,10 @@ function createPaginationButton(value, text) {
 resetButton.addEventListener('click', () => {
     sortState = resetObjectValues(sortState);
     removeClassFromElements(sortLabels, 'active');
-    displayCards('full');
+    displayCards('total');
+    localStorage.setItem('deletedPosts', '');
 });
+
 
 // Helpers
 
@@ -387,6 +432,14 @@ function timestampToDate(value) {
 }
 
 // Update local storage
-function updateLocalStorage(posts) {
-    localStorage.setItem('posts', JSON.stringify(posts));
+function updateLocalStorage(name, posts) {
+    localStorage.setItem(name, JSON.stringify(posts));
+}
+
+// Save deleted posts to local storage
+function saveDeletedPostsToLocalStorage(deletedPosts) {
+    var a = [];
+    if (localStorage.getItem('deletedPosts')) a = JSON.parse(localStorage.getItem('deletedPosts')) || [];
+    a.push(deletedPosts);
+    localStorage.setItem('deletedPosts', JSON.stringify(a));
 }

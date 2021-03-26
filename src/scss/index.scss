@@ -1,3 +1,10 @@
+/*
+* Prefixed by https://autoprefixer.github.io
+* PostCSS: v7.0.29,
+* Autoprefixer: v9.7.6
+* Browsers: last 4 version
+*/
+
 @import "~bootstrap/scss/bootstrap";
 
 html, body, div, span, applet, object, iframe,
@@ -74,11 +81,21 @@ table {
 	z-index: 1;
 }
 
+ul.list {
+	width: 300px;
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	    -ms-user-select: none;
+	        user-select: none;
+}
+
 .modal-container {
 	position: relative;
 	height: auto;
 	float: right;
-	width: calc(100% - 130px);
+	width: calc(100% - 300px);
+	max-width: calc(100% - 300px);
+	padding-top: 10px;
 }
 
 .modal__image {
@@ -115,7 +132,7 @@ table {
 	line-height: 1.4;
 }
 
-.strong {
+.strong, strong {
 	font-weight: 500;
 }
 
@@ -242,21 +259,46 @@ button.close {
 	display: block;
 }
 
-.list__image {
+.list-item {
+	font-size: 14px;
+	margin-bottom: 20px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: row;
+	        flex-direction: row;
+	-webkit-box-align: start;
+	    -ms-flex-align: start;
+	        align-items: flex-start;
+	-webkit-box-pack: start;
+	    -ms-flex-pack: start;
+	        justify-content: flex-start;
+}
+
+.list-item__image {
+	margin-top: 0;
+	margin-right: 7px;
 	width: 40px;
 	height: 40px;
+	margin-bottom: 5px;
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
 }
 
-.list__image img {
+.list-item__image img {
 	width: 40px;
 	height: 40px;
 	-o-object-fit: cover;
 	   object-fit: cover;
 }
 
-.full-size .list__image {
+.list-item__info {
+	font-size: 11px;
+}
+
+.full-size .list-item__image {
 	-webkit-box-shadow: 0px 0px 0px 2px #007bff;
 	        box-shadow: 0px 0px 0px 2px #007bff;
 }
@@ -424,6 +466,10 @@ button.close {
 	.modal-container {
 		width: calc(100% - 110px);
 	}
+
+	.card-img {
+		min-height: 65vw;
+	}
 }
 
 @media (max-width: 576px) {
@@ -436,5 +482,25 @@ button.close {
 		margin-right: 0;
 		width: 50%;
 		margin-bottom: 7px;
+	}
+
+	.list-item {
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		    -ms-flex-direction: column;
+		        flex-direction: column;
+	}
+
+	ul.list {
+		width: 50%;
+	}
+
+	.modal-container {
+		width: 50%;
+		max-width: 50%;
+	}
+
+	.list ul {
+		padding-left: 10px;
 	}
 }

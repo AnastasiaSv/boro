@@ -22,6 +22,7 @@ const postsContainer = document.querySelector('.posts-container'),
 let rows = 16,
     currentPage = 1,
     paginationActiveButtons = 5,
+    timeOut,
     sortState = {
         sortByTitle: null,
         sortByCategory: null,
@@ -40,6 +41,7 @@ sortListener(sizeSort, 'sortBySize');
 async function getPosts() {
     const res = await fetch(`${url}catalog.json`);
     const data = await res.json();
+
     return data;
 }
 
@@ -102,8 +104,8 @@ function createGrid(posts, currentPosts, pages) {
 
     for (let i = 0; i < currentPosts.length; i++) {
         let post = currentPosts[i];
-
         const cardWrapperEl = document.createElement('div');
+
         cardWrapperEl.classList.add('card-wrapper', 'col-lg-3', 'col-md-4', 'col-sm-12');
         cardWrapperEl.id = post.id;
         cardWrapperEl.innerHTML = `
@@ -135,7 +137,6 @@ function createGrid(posts, currentPosts, pages) {
         });
 
         postsContainer.appendChild(cardWrapperEl);
-
         createPaginationButtons(pages);
     }
 
@@ -146,6 +147,7 @@ function createGrid(posts, currentPosts, pages) {
 // Display data as list
 async function displayList() {
     loader.style.display = 'block';
+
     let posts = await getPosts();
     let listArray = groupByProp(posts);
     let parentList = document.createElement('ul');
@@ -156,6 +158,7 @@ async function displayList() {
 
         listArray[key].forEach(post => {
             let li = document.createElement('li');
+
             li.innerHTML = `
                 <div class="list-item">
                     <div class="list-item__image"><img src="${url}${post.image}" alt="" /></div>
@@ -188,11 +191,11 @@ async function displayList() {
         });
 
         loader.style.display = 'none';
-        
         parentList.append(parentLi);
     }
 
     list.innerHTML = '<li class="list__item list__item-root show">categories</li>';
+
     const listItemRoot = list.querySelector('.list__item-root');
 
     listItemRoot.append(parentList);
@@ -224,6 +227,7 @@ function sortListener(elements, prop) {
     elements.forEach(item => {
         item.addEventListener('click', event => {
             let order = event.target.value;
+
             removeClassFromElements(sortLabels, 'active');
             document.querySelector(`label[for="${event.target.id}"]`).classList.add('active');
             sortState = resetObjectValues(sortState);
@@ -237,9 +241,7 @@ function sortListener(elements, prop) {
 function pagination(posts, page, rows) {
     const trimStart = (page - 1) * rows;
     const trimEnd = trimStart + rows;
-
     const trimmedData = posts.slice(trimStart, trimEnd);
-
     const pages = Math.ceil(posts.length / rows);
 
     return {
@@ -287,6 +289,7 @@ function createPaginationButtons(pages) {
 // Create pagination buttons
 function createPaginationButton(value, text) {
     let item = document.createElement('li');
+
     item.classList.add('page-item');
     item.setAttribute('data-value', value);
     item.innerHTML = `<a class="page-link" href="#">${text}</a>`;
@@ -310,10 +313,10 @@ resetButton.addEventListener('click', () => {
 // Helpers
 
 // Go up function
-let timeOut;
 function goUp() {
     const top = Math.max(document.body.scrollTop,document.documentElement.scrollTop);
-    if(top > 0) {
+
+    if (top > 0) {
         window.scrollBy(0,-100);
         timeOut = setTimeout(goUp(),20);
     } else clearTimeout(timeOut);
@@ -326,6 +329,7 @@ function setDisplay(element, prop) {
 
 function createTextElement(name, text, className) {
     const li = document.createElement(name);
+
     li.textContent = text;
     li.classList.add(className);
 
@@ -344,6 +348,7 @@ function groupByProp(data) {
 // Create image
 function createImage(src, className) {
     let image = document.createElement('img');
+
     image.classList.add(className);
     image.setAttribute('alt', '');
     image.setAttribute('src', src);
@@ -354,6 +359,7 @@ function createImage(src, className) {
 // Set all object values to null
 function resetObjectValues(obj) {
     Object.keys(obj).forEach(i => obj[i] = null);
+
     return obj;
 }
 
@@ -390,6 +396,7 @@ function sortDesc(elements, prop) {
 // Add id to post
 function addIdsToPosts(posts) {
     posts.map((item, i) => {item.id = i;});
+
     return posts;
 }
 
@@ -400,14 +407,17 @@ function showName(name) {
 // Filesize
 function bytesToSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
     if (bytes == 0) return '0 Byte';
     const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+
     return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
  }
 
 // Timestamp to date
 function timestampToDate(value) {
     const d = new Date();
+    
     d.setTime(value);
     return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
 }

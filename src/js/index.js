@@ -150,7 +150,7 @@ async function displayList() {
     let listArray = groupByProp(posts);
     let parentList = document.createElement('ul');
 
-    for(var key in listArray) {
+    for(let key in listArray) {
         let parentLi = createTextElement('li', key, 'show');
         let childList = document.createElement('ul');
 
@@ -235,12 +235,12 @@ function sortListener(elements, prop) {
 
 // Calculate pagination data
 function pagination(posts, page, rows) {
-    var trimStart = (page - 1) * rows;
-    var trimEnd = trimStart + rows;
+    const trimStart = (page - 1) * rows;
+    const trimEnd = trimStart + rows;
 
-    var trimmedData = posts.slice(trimStart, trimEnd);
+    const trimmedData = posts.slice(trimStart, trimEnd);
 
-    var pages = Math.ceil(posts.length / rows);
+    const pages = Math.ceil(posts.length / rows);
 
     return {
         'currentPosts': trimmedData,
@@ -399,15 +399,15 @@ function showName(name) {
 
 // Filesize
 function bytesToSize(bytes) {
-    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     if (bytes == 0) return '0 Byte';
-    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
     return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
  }
 
 // Timestamp to date
 function timestampToDate(value) {
-    var d = new Date();
+    const d = new Date();
     d.setTime(value);
     return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
 }
